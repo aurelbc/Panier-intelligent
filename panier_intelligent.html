@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panier Intelligent - Gestion des Courses</title>
+    <style>
+        /* Styles généraux */
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #166088;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        /* En-tête */
+        header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        header h1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tagline {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* Navigation */
+        nav.tabs {
+            display: flex;
+            background: var(--light);
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: var(--primary);
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+        
+        /* Contenu des onglets */
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Section d'ajout */
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--light);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* Historique */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background: rgba(0,0,0,0.02);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* Statistiques */
+        .period-selector {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .period-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .period-btn.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+        
+        .top-product-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .product-name {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        
+        .product-count {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        /* Messages */
+        .message {
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: block;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Graphique container */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin: 2rem 0;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-bar {
+                grid-template-columns: 1fr;
+            }
+            
+            .period-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête -->
+        <header>
+            <h1>
+                <i class="fas fa-shopping-basket"></i>
+                Panier Intelligent
+            </h1>
+            <p class="tagline">Gérez vos courses, analysez vos dépenses</p>
+        </header>
+        
+        <!-- Navigation par onglets -->
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="ajouter">
+                <i class="fas fa-plus-circle"></i> Ajouter
+            </button>
+            <button class="tab-btn" data-tab="historique">
+                <i class="fas fa-history"></i> Historique
+            </button>
+            <button class="tab-btn" data-tab="statistiques">
+                <i class="fas fa-chart-bar"></i> Statistiques
+            </button>
+        </nav>
+        
+        <!-- Zone de messages -->
+        <div id="message-area"></div>
+        
+        <!-- Onglet 1: Ajouter un achat -->
+        <div id="ajouter" class="tab-content active">
+            <h2><i class="fas fa-cart-plus"></i> Ajouter un nouvel achat</h2>
+            <p class="tagline">Enregistrez vos achats pour suivre vos dépenses</p>
+            
+            <div class="form-container">
+                <form id="achat-form">
+                    <div class="form-group">
+                        <label for="produit">
+                            <i class="fas fa-tag"></i> Produit *
+                        </label>
+                        <input type="text" 
+                               id="produit" 
+                               required 
+                               placeholder="Ex: Lait, Pain, Œufs..."
+                               maxlength="100">
+                        <small style="color: #666; font-size: 0.9rem;">Nom du produit acheté (max 100 caractères)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prix">
+                            <i class="fas fa-money-bill-wave"></i> Prix (FCFA) *
+                        </label>
+                        <input type="number" 
+                               id="prix" 
+                               required 
+                               step="1"
+                               min="1"
+                               placeholder="0">
+                        <small style="color: #666; font-size: 0.9rem;">Doit être supérieur à 0 FCFA</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="date">
+                            <i class="fas fa-calendar"></i> Date d'achat
+                        </label>
+                        <input type="date" id="date">
+                        <small style="color: #666; font-size: 0.9rem;">Par défaut : aujourd'hui</small>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check"></i> Enregistrer l'achat
+                        </button>
+                        <button type="reset" class="btn" style="background: #ddd;">
+                            <i class="fas fa-redo"></i> Réinitialiser
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Onglet 2: Historique -->
+        <div id="historique" class="tab-content">
+            <h2><i class="fas fa-list-alt"></i> Historique des achats</h2>
+            <p class="tagline">Visualisez tous vos achats triés par date</p>
+            
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <h3>Total dépensé</h3>
+                    <p class="stat-value" id="total-depense">0 FCFA</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Nombre d'achats</h3>
+                    <p class="stat-value" id="total-achats">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Moyenne par achat</h3>
+                    <p class="stat-value" id="moyenne-achat">0 FCFA</p>
+                </div>
+            </div>
+            
+            <div style="text-align: right; margin-bottom: 1rem;">
+                <button class="btn btn-danger" id="supprimer-tous" style="display: none;">
+                    <i class="fas fa-trash"></i> Supprimer tous les achats
+                </button>
+            </div>
+            
+            <div id="historique-table">
+                <!-- Le tableau sera généré ici par JavaScript -->
+                <div class="empty-state">
+                    <i class="fas fa-shopping-basket"></i>
+                    <h3>Aucun achat enregistré</h3>
+                    <p>Commencez par ajouter votre premier achat !</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Onglet 3: Statistiques -->
+        <div id="statistiques" class="tab-content">
+            <h2><i class="fas fa-chart-pie"></i> Analyse des tendances</h2>
+            <p class="tagline">Découvrez vos habitudes de consommation</p>
+            
+            <!-- Sélecteur de période -->
+            <div class="period-selector">
+                <span style="font-weight: 600;">Période :</span>
+                <button class="period-btn active" data-period="7j">7 derniers jours</button>
+                <button class="period-btn" data-period="30j">30 derniers jours</button>
+                <button class="period-btn" data-period="90j">90 derniers jours</button>
+                <button class="period-btn" data-period="mois">Ce mois</button>
+                <button class="period-btn" data-period="annee">Cette année</button>
+                <button class="period-btn" data-period="tous">Tous</button>
+                
+                <div style="margin-left: auto;">
+                    <button class="btn btn-success" id="export-btn">
+                        <i class="fas fa-download"></i> Exporter CSV
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Carte du produit le plus acheté -->
+            <div class="top-product-card">
+                <h3><i class="fas fa-crown"></i> Produit le plus acheté</h3>
+                <div class="product-name" id="top-produit-nom">Aucun</div>
+                <div class="product-count" id="top-produit-count">Sur la période sélectionnée</div>
+                <small style="opacity: 0.7;" id="periode-affichee"></small>
+            </div>
+            
+            <!-- Graphique des dépenses -->
+            <div style="background: var(--light); padding: 2rem; border-radius: var(--border-radius); margin-top: 2rem;">
+                <h3><i class="fas fa-chart-line"></i> Évolution des dépenses</h3>
+                <div class="chart-container">
+                    <canvas id="depenses-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Top 5 produits -->
+            <div style="margin-top: 2rem;">
+                <h3><i class="fas fa-trophy"></i> Top 5 des produits</h3>
+                <table id="top5-table">
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Produit</th>
+                            <th>Nombre d'achats</th>
+                            <th>Total dépensé</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top5-body">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script principal -->
+    <script>
+        // ================ GESTION DES DONNÉES ================
+        class PanierIntelligent {
+            constructor() {
+                // Initialiser le stockage local
+                this.achats = JSON.parse(localStorage.getItem('panier_achats')) || [];
+                this.init();
+            }
+            
+            init() {
+                // Mettre la date du jour par défaut
+                document.getElementById('date').valueAsDate = new Date();
+                
+                // Charger l'historique
+                this.afficherHistorique();
+                
+                // Calculer les statistiques
+                this.calculerStatistiques();
+            }
+            
+            // Ajouter un achat
+            ajouterAchat(produit, prix, dateAchat) {
+                const nouvelAchat = {
+                    id: Date.now(), // ID unique basé sur le timestamp
+                    produit: produit.trim(),
+                    prix: parseInt(prix), // Changé pour FCFA (entier)
+                    date: dateAchat || new Date().toISOString().split('T')[0]
+                };
+                
+                // Validation
+                if (!this.validerAchat(nouvelAchat)) {
+                    return false;
+                }
+                
+                this.achats.push(nouvelAchat);
+                this.sauvegarder();
+                this.afficherMessage("Achat ajouté avec succès !", "success");
+                return true;
+            }
+            
+            // Valider un achat
+            validerAchat(achat) {
+                if (!achat.produit || achat.produit.length === 0) {
+                    this.afficherMessage("Le nom du produit est obligatoire", "error");
+                    return false;
+                }
+                
+                if (achat.prix <= 0 || isNaN(achat.prix)) {
+                    this.afficherMessage("Le prix doit être supérieur à 0 FCFA", "error");
+                    return false;
+                }
+                
+                // Vérifier si la date n'est pas future
+                const dateAchat = new Date(achat.date);
+                const aujourdhui = new Date();
+                aujourdhui.setHours(23, 59, 59, 999);
+                
+                if (dateAchat > aujourdhui) {
+                    if (!confirm("La date sélectionnée est dans le futur. Voulez-vous continuer ?")) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            // Supprimer un achat
+            supprimerAchat(id) {
+                this.achats = this.achats.filter(a => a.id !== id);
+                this.sauvegarder();
+                this.afficherMessage("Achat supprimé", "warning");
+            }
+            
+            // Supprimer tous les achats
+            supprimerTous() {
+                if (confirm("Êtes-vous sûr de vouloir supprimer TOUS les achats ? Cette action est irréversible.")) {
+                    this.achats = [];
+                    this.sauvegarder();
+                    this.afficherMessage("Tous les achats ont été supprimés", "warning");
+                }
+            }
+            
+            // Sauvegarder dans le localStorage
+            sauvegarder() {
+                localStorage.setItem('panier_achats', JSON.stringify(this.achats));
+                this.afficherHistorique();
+                this.calculerStatistiques();
+            }
+            
+            // Afficher un message
+            afficherMessage(texte, type = "info") {
+                const messageArea = document.getElementById('message-area');
+                messageArea.innerHTML = `
+                    <div class="message ${type}">
+                        <strong>${type === 'success' ? '✓' : type === 'error' ? '✗' : '⚠'}</strong>
+                        ${texte}
+                    </div>
+                `;
+                
+                // Supprimer le message après 5 secondes
+                setTimeout(() => {
+                    messageArea.innerHTML = '';
+                }, 5000);
+            }
+            
+            // ================ HISTORIQUE ================
+            afficherHistorique() {
+                const container = document.getElementById('historique-table');
+                const supprimerBtn = document.getElementById('supprimer-tous');
+                
+                if (this.achats.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-shopping-basket"></i>
+                            <h3>Aucun achat enregistré</h3>
+                            <p>Commencez par ajouter votre premier achat !</p>
+                        </div>
+                    `;
+                    supprimerBtn.style.display = 'none';
+                    return;
+                }
+                
+                // Trier par date (du plus récent)
+                const achatsTries = [...this.achats].sort((a, b) => 
+                    new Date(b.date) - new Date(a.date)
+                );
+                
+                // Générer le tableau HTML
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Produit</th>
+                                <th>Prix</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                achatsTries.forEach(achat => {
+                    const date = new Date(achat.date);
+                    const dateFormatee = date.toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                    
+                    html += `
+                        <tr>
+                            <td>${dateFormatee}</td>
+                            <td>${achat.produit}</td>
+                            <td>${achat.prix.toLocaleString('fr-FR')} FCFA</td>
+                            <td>
+                                <button onclick="app.supprimerAchat(${achat.id})" 
+                                        class="btn btn-danger" 
+                                        style="padding: 0.3rem 0.6rem; font-size: 0.9rem;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = html;
+                supprimerBtn.style.display = 'block';
+                
+                // Mettre à jour les statistiques
+                this.mettreAJourStats();
+            }
+            
+            mettreAJourStats() {
+                if (this.achats.length === 0) {
+                    document.getElementById('total-depense').textContent = '0 FCFA';
+                    document.getElementById('total-achats').textContent = '0';
+                    document.getElementById('moyenne-achat').textContent = '0 FCFA';
+                    return;
+                }
+                
+                const total = this.achats.reduce((sum, a) => sum + a.prix, 0);
+                const moyenne = Math.round(total / this.achats.length);
+                
+                document.getElementById('total-depense').textContent = total.toLocaleString('fr-FR') + ' FCFA';
+                document.getElementById('total-achats').textContent = this.achats.length;
+                document.getElementById('moyenne-achat').textContent = moyenne.toLocaleString('fr-FR') + ' FCFA';
+            }
+            
+            // ================ STATISTIQUES ================
+            calculerStatistiques(periode = 'tous') {
+                // Filtrer selon la période
+                let achatsFiltres = this.filtrerParPeriode(periode);
+                
+                // Mettre à jour l'affichage de la période
+                this.mettreAJourPeriodeAffichage(periode);
+                
+                // Top produit
+                this.afficherTopProduit(achatsFiltres);
+                
+                // Top 5 produits
+                this.afficherTop5(achatsFiltres);
+                
+                // Graphique des dépenses
+                this.afficherGraphique(achatsFiltres);
+            }
+            
+            filtrerParPeriode(periode) {
+                const aujourdhui = new Date();
+                let dateLimite = new Date(0); // Date très ancienne
+                
+                switch(periode) {
+                    case '7j':
+                        dateLimite = new Date(aujourdhui);
+                        dateLimite.setDate(dateLimite.getDate() - 7);
+                        break;
+                    case '30j':
+                        dateLimite = new Date(aujourdhui);
+                        dateLimite.setDate(dateLimite.getDate() - 30);
+                        break;
+                    case '90j':
+                        dateLimite = new Date(aujourdhui);
+                        dateLimite.setDate(dateLimite.getDate() - 90);
+                        break;
+                    case 'mois':
+                        dateLimite = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 1);
+                        break;
+                    case 'annee':
+                        dateLimite = new Date(aujourdhui.getFullYear(), 0, 1);
+                        break;
+                    case 'tous':
+                        return this.achats;
+                }
+                
+                return this.achats.filter(achat => {
+                    const dateAchat = new Date(achat.date);
+                    return dateAchat >= dateLimite && dateAchat <= aujourdhui;
+                });
+            }
+            
+            mettreAJourPeriodeAffichage(periode) {
+                const labels = {
+                    '7j': '7 derniers jours',
+                    '30j': '30 derniers jours',
+                    '90j': '90 derniers jours',
+                    'mois': 'ce mois-ci',
+                    'annee': 'cette année',
+                    'tous': 'tous les achats'
+                };
+                
+                document.getElementById('periode-affichee').textContent = 
+                    `(Sur les ${labels[periode]})`;
+            }
+            
+            afficherTopProduit(achats) {
+                const topProduitNom = document.getElementById('top-produit-nom');
+                const topProduitCount = document.getElementById('top-produit-count');
+                
+                if (achats.length === 0) {
+                    topProduitNom.textContent = 'Aucun';
+                    topProduitCount.textContent = 'Aucun achat sur la période';
+                    return;
+                }
+                
+                // Compter les occurrences
+                const comptes = {};
+                achats.forEach(achat => {
+                    comptes[achat.produit] = (comptes[achat.produit] || 0) + 1;
+                });
+                
+                // Trouver le maximum
+                let maxProduit = null;
+                let maxCount = 0;
+                
+                for (const [produit, count] of Object.entries(comptes)) {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        maxProduit = produit;
+                    }
+                }
+                
+                // Vérifier les ex æquo
+                const produitsMax = Object.entries(comptes)
+                    .filter(([_, count]) => count === maxCount)
+                    .map(([produit]) => produit);
+                
+                if (produitsMax.length > 1) {
+                    topProduitNom.textContent = produitsMax.join(', ');
+                    topProduitCount.textContent = `${maxCount} achats chacun (ex æquo)`;
+                } else {
+                    topProduitNom.textContent = maxProduit;
+                    topProduitCount.textContent = `${maxCount} achat${maxCount > 1 ? 's' : ''}`;
+                }
+            }
+            
+            afficherTop5(achats) {
+                const tbody = document.getElementById('top5-body');
+                
+                if (achats.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 2rem;">
+                                Aucun achat sur cette période
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Regrouper par produit
+                const groupes = {};
+                achats.forEach(achat => {
+                    if (!groupes[achat.produit]) {
+                        groupes[achat.produit] = {
+                            produit: achat.produit,
+                            count: 0,
+                            total: 0
+                        };
+                    }
+                    groupes[achat.produit].count++;
+                    groupes[achat.produit].total += achat.prix;
+                });
+                
+                // Convertir en tableau et trier
+                const topProduits = Object.values(groupes)
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5);
+                
+                // Générer le tableau
+                let html = '';
+                topProduits.forEach((produit, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${produit.produit}</td>
+                            <td>${produit.count}</td>
+                            <td>${produit.total.toLocaleString('fr-FR')} FCFA</td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+            }
+            
+            afficherGraphique(achats) {
+                const canvas = document.getElementById('depenses-chart');
+                const ctx = canvas.getContext('2d');
+                
+                // Effacer le canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Définir la taille du canvas
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                
+                if (achats.length === 0) {
+                    ctx.font = '16px Arial';
+                    ctx.fillStyle = '#666';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Aucune donnée à afficher', canvas.width/2, canvas.height/2);
+                    return;
+                }
+                
+                // Grouper par mois
+                const parMois = {};
+                
+                achats.forEach(achat => {
+                    const date = new Date(achat.date);
+                    const mois = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                    
+                    if (!parMois[mois]) {
+                        parMois[mois] = 0;
+                    }
+                    parMois[mois] += achat.prix;
+                });
+                
+                // Trier les mois
+                const moisTries = Object.keys(parMois).sort();
+                const valeurs = moisTries.map(mois => parMois[mois]);
+                
+                if (moisTries.length === 0) {
+                    ctx.font = '16px Arial';
+                    ctx.fillStyle = '#666';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Aucune donnée à afficher', canvas.width/2, canvas.height/2);
+                    return;
+                }
+                
+                // Formater les labels de mois
+                const labels = moisTries.map(mois => {
+                    const [annee, moisNum] = mois.split('-');
+                    return `${moisNum}/${annee.substring(2)}`;
+                });
+                
+                // Dimensions du graphique
+                const width = canvas.width;
+                const height = canvas.height;
+                const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+                const graphWidth = width - padding.left - padding.right;
+                const graphHeight = height - padding.top - padding.bottom;
+                
+                // Échelles
+                const maxVal = Math.max(...valeurs);
+                const minVal = Math.min(...valeurs);
+                const range = maxVal - minVal;
+                const yScale = graphHeight / (range || maxVal || 1);
+                
+                // Dessiner les axes
+                ctx.beginPath();
+                ctx.moveTo(padding.left, padding.top);
+                ctx.lineTo(padding.left, height - padding.bottom);
+                ctx.lineTo(width - padding.right, height - padding.bottom);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Dessiner les lignes de grille
+                ctx.strokeStyle = '#eee';
+                ctx.lineWidth = 1;
+                
+                // Lignes horizontales (5 lignes)
+                const numLines = 5;
+                for (let i = 0; i <= numLines; i++) {
+                    const y = padding.top + (graphHeight * i / numLines);
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(width - padding.right, y);
+                    ctx.stroke();
+                    
+                    // Étiquettes Y
+                    ctx.fillStyle = '#666';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    const valeurEtiquette = Math.round(maxVal - (range * i / numLines));
+                    ctx.fillText(valeurEtiquette.toLocaleString('fr-FR') + ' FCFA', padding.left - 10, y);
+                }
+                
+                // Points et lignes verticales
+                const xStep = graphWidth / Math.max(1, labels.length - 1);
+                
+                ctx.beginPath();
+                ctx.strokeStyle = '#4a6fa5';
+                ctx.lineWidth = 3;
+                ctx.fillStyle = '#4a6fa5';
+                
+                valeurs.forEach((valeur, i) => {
+                    const x = padding.left + i * xStep;
+                    const y = padding.top + graphHeight - ((valeur - minVal) * yScale);
+                    
+                    // Point de données
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Ligne entre les points
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    // Étiquette X
+                    ctx.fillStyle = '#666';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(labels[i], x, height - padding.bottom + 10);
+                });
+                
+                ctx.stroke();
+                
+                // Titre du graphique
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText('Évolution des dépenses mensuelles', width/2, 5);
+            }
+            
+            // ================ EXPORT ================
+            exporterCSV(periode = 'tous') {
+                const achatsFiltres = this.filtrerParPeriode(periode);
+                
+                if (achatsFiltres.length === 0) {
+                    this.afficherMessage("Aucun achat à exporter", "warning");
+                    return;
+                }
+                
+                // En-tête CSV
+                let csv = "Produit,Prix (FCFA),Date\n";
+                
+                // Données
+                achatsFiltres.forEach(achat => {
+                    csv += `"${achat.produit}",${achat.prix},"${achat.date}"\n`;
+                });
+                
+                // Créer un blob et télécharger
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `panier_intelligent_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.afficherMessage("Export CSV généré avec succès", "success");
+            }
+        }
+        
+        // ================ GESTION DE L'INTERFACE ================
+        class InterfaceManager {
+            constructor() {
+                this.app = new PanierIntelligent();
+                this.setupEventListeners();
+                this.setupResizeHandler();
+            }
+            
+            setupEventListeners() {
+                // Navigation par onglets
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const tabId = e.target.dataset.tab;
+                        this.changerOnglet(tabId);
+                    });
+                });
+                
+                // Formulaire d'ajout
+                document.getElementById('achat-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.ajouterAchat();
+                });
+                
+                // Supprimer tous les achats
+                document.getElementById('supprimer-tous').addEventListener('click', () => {
+                    this.app.supprimerTous();
+                });
+                
+                // Boutons de période
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const periode = e.target.dataset.period;
+                        this.changerPeriode(periode);
+                    });
+                });
+                
+                // Bouton d'export
+                document.getElementById('export-btn').addEventListener('click', () => {
+                    const periodeActive = document.querySelector('.period-btn.active').dataset.period;
+                    this.app.exporterCSV(periodeActive);
+                });
+                
+                // Validation en temps réel
+                document.getElementById('prix').addEventListener('change', (e) => {
+                    const valeur = parseInt(e.target.value);
+                    if (valeur <= 0) {
+                        e.target.style.borderColor = '#e74c3c';
+                    } else {
+                        e.target.style.borderColor = '';
+                    }
+                });
+            }
+            
+            setupResizeHandler() {
+                let resizeTimeout;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(() => {
+                        if (document.getElementById('statistiques').classList.contains('active')) {
+                            const periodeActive = document.querySelector('.period-btn.active').dataset.period;
+                            this.app.calculerStatistiques(periodeActive);
+                        }
+                    }, 250);
+                });
+            }
+            
+            changerOnglet(tabId) {
+                // Mettre à jour les boutons
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+                
+                // Mettre à jour le contenu
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+                
+                // Si on va sur statistiques, recalculer
+                if (tabId === 'statistiques') {
+                    setTimeout(() => {
+                        const periodeActive = document.querySelector('.period-btn.active').dataset.period;
+                        this.app.calculerStatistiques(periodeActive);
+                    }, 100);
+                }
+            }
+            
+            ajouterAchat() {
+                const produit = document.getElementById('produit').value;
+                const prix = document.getElementById('prix').value;
+                const date = document.getElementById('date').value;
+                
+                const success = this.app.ajouterAchat(produit, prix, date);
+                
+                if (success) {
+                    // Réinitialiser le formulaire
+                    document.getElementById('achat-form').reset();
+                    document.getElementById('date').valueAsDate = new Date();
+                    
+                    // Aller sur l'onglet historique
+                    this.changerOnglet('historique');
+                }
+            }
+            
+            changerPeriode(periode) {
+                // Mettre à jour les boutons
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-period="${periode}"]`).classList.add('active');
+                
+                // Recalculer les statistiques
+                setTimeout(() => {
+                    this.app.calculerStatistiques(periode);
+                }, 50);
+            }
+        }
+        
+        // ================ INITIALISATION ================
+        let appInterface;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            appInterface = new InterfaceManager();
+            // Exposer l'application globalement pour les boutons onclick
+            window.app = appInterface.app;
+        });
+    </script>
+</body>
+</html>
